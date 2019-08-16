@@ -1,0 +1,103 @@
+//c program for pass 1 of two pass assembler
+
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#define len 30
+void main()
+{
+
+	FILE *optab, *input, *symtab;
+	char label[len], opcode[len], operand[len], lbl[len], scode[len];
+	int loc, start, addr, ncode, plen = 0;
+	int ldup = 0, opflag = 0;
+
+	input = fopen("input.txt","r");
+	symtab = fopen("symtab.txt", "w");
+
+	fscanf(input, "%s %s %s", label, opcode, operand);
+
+//printf("label: %s\nopcode: %s\noperand: %d\n\n", label, opcode,loc);
+
+	if(strcmp(opcode, "START")==0)
+	{
+		loc = atoi(operand);
+		start = loc;
+	}
+
+	else
+	loc = 0;
+
+	while((fscanf(input, "%s %s %s", label, opcode, operand)==3)&&(strcmp(opcode,"END")!=0))
+	{
+
+		ldup = 0;
+		opflag = 0;
+
+		if(strcmp(label,"-")!=0)
+		{
+
+			while(fscanf(symtab, "%s %d", lbl, &addr)==2)
+			{
+				if(strcmp(label, lbl)==0)
+				{
+					ldup = 1;
+					break;
+				}
+			}
+
+			if(ldup == 1)
+			{
+				printf("\nDuplicate label!!\n");
+				exit(0);
+			}
+
+			else
+                        fprintf(symtab, "%s %d\n", label, loc);
+
+		}
+
+		optab = fopen("opcode.txt","r");
+		while(fscanf(optab, "%s %d", scode, &ncode)==2)
+		{
+			if(strcmp(opcode, scode)==0)
+			{
+				opflag = 1;
+				break;
+			}
+		}
+		fclose(optab);
+
+		if(opflag==1)
+			loc+=3;
+		else if(strcmp(opcode, "WORD")==0)
+			loc+=3;
+		else if(strcmp(opcode, "RESB")==0)
+			loc+=atoi(operand);
+		else if(strcmp(opcode, "RESW")==0)
+			loc = loc + (3*atoi(operand));
+		else if(strcmp(opcode, "BYTE")==0)
+                        loc = loc + strlen(operand) - 2;
+		else
+		{
+			printf("Invalid Opcode!!");
+			exit(0);
+		}
+
+//		printf("\nloc = %d\n", loc);
+	}
+
+	fclose(symtab);
+
+	plen = loc - start;
+
+	symtab = fopen("symtab.txt", "r");
+	printf("\n\nLabel\tAddress\n");
+        while(fscanf(symtab, "%s %d", lbl, &addr)==2)
+	{
+		printf("%s\t%d\n", lbl, addr);
+	}
+	fclose(symtab);
+
+	printf("\n\nProgram Length: %d\n\n", plen);
+}
